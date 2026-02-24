@@ -25,9 +25,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
         <ThemeProvider
+          // En lugar de manejar el tema inyectando atributos style, lo haga agregando la clase "dark" al body
           attribute="class"
           defaultTheme="light"
+          // Permite detectar a nivel de SO si el usuario tiene preferencia para un tema oscuro
           enableSystem
+          // Deshabilita la transición entre temas
           disableTransitionOnChange
         >
           {children}
