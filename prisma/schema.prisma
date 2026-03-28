@@ -14,19 +14,77 @@ datasource db {
 }
 
 model Product {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String
-  slug        String   @unique(map: "product_slug_key")
+  slug        String    @unique(map: "product_slug_key")
   category    String
   images      String[]
   brand       String
   description String
   stock       Int
-  price       Decimal  @default(0) @db.Decimal(12, 2)
-  rating      Decimal  @default(0) @db.Decimal(3, 2)
-  numReviews  Int      @default(0)
-  isFeatured  Boolean  @default(false)
+  price       Decimal   @default(0) @db.Decimal(12, 2)
+  rating      Decimal   @default(0) @db.Decimal(3, 2)
+  numReviews  Int       @default(0)
+  isFeatured  Boolean   @default(false)
   banner      String?
-  createdAt   DateTime @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime @updatedAt @db.Timestamp(6)
+  createdAt   DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime  @updatedAt @db.Timestamp(6)
+  account     Account[]
+}
+
+model User {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String    @default("NO_NAME")
+  email          String    @unique(map: "user_email_idx")
+  email_verified Boolean   @default(false)
+  image          String?
+  password       String?
+  role           String    @default("user")
+  address        Json?     @db.Json
+  createdAt      DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime  @updatedAt @db.Timestamp(6)
+  accounts       Account[]
+  sessions       Session[]
+}
+
+model Account {
+  userId            String  @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt @db.Timestamp(6)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id])
+  productId String?  @db.Uuid
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @id
+  userId       String   @db.Uuid
+  expiresAt    DateTime @db.Timestamp(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt @db.Timestamp(6)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expiresAt  DateTime
+
+  @@id([identifier, token])
 }
