@@ -73,10 +73,11 @@ function SignUpForm() {
                         name="confirmPassword"
                         type="password"
                         required
-                        autoComplete="confirmPassword"
-                        defaultValue={sigUpDefaultValues.confirmPassword}
+                        autoComplete="password"
+                        defaultValue={sigUpDefaultValues.password}
                     />
                 </div>
+
                 <div>
                     <SignUpButton />
                 </div>
