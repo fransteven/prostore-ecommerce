@@ -1,15 +1,15 @@
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { getProductBySlug } from "@/lib/actions/product.actions"
 import { notFound } from "next/navigation"
 import ProductPrice from "@/components/product/product-price"
 import ProductImages from "@/components/product/product-images"
+import AddToCart from "@/components/product/add-to-cart"
 
-async function ProductPage(props:{
-    params: Promise<{slug:string}>
+async function ProductPage(props: {
+    params: Promise<{ slug: string }>
 }) {
-    const {slug} = await props.params
+    const { slug } = await props.params
     const product = await getProductBySlug(slug)
     if (!product) notFound()
 
@@ -19,7 +19,7 @@ async function ProductPage(props:{
                 <div className="grid grid-cols-1 md:grid-cols-5">
                     {/**Images Column */}
                     <div className="col-span-2 p-5">
-                        <ProductImages images={product.images}/>
+                        <ProductImages images={product.images} />
                     </div>
                     {/**Details Column */}
                     <div className="col-span-2 p-5">
@@ -32,7 +32,7 @@ async function ProductPage(props:{
                                 {product.rating} of {product.numReviews} Reviews
                             </p>
                             <div className="flex flex-col sm:flex-row sm:itmes-center gap-3">
-                                <ProductPrice value={Number(product.price)} className="w-24 rounded-full bg-green-100 text-green-700 px-5 py-2"/>
+                                <ProductPrice value={Number(product.price)} className="w-24 rounded-full bg-green-100 text-green-700 px-5 py-2" />
                             </div>
                         </div>
                         <div className="mt-10">
@@ -47,7 +47,7 @@ async function ProductPage(props:{
                                 <div className="mb-2 flex justify-between">
                                     <div>Price</div>
                                     <div>
-                                        <ProductPrice value={Number(product.price)}/>
+                                        <ProductPrice value={Number(product.price)} />
                                     </div>
                                 </div>
                                 <div className="mb-2 flex justify-between">
@@ -61,14 +61,17 @@ async function ProductPage(props:{
                                     </div>
                                 </div>
                                 {product.stock > 0 && (
-                                        <div className="flex-center">
-                                            <Button
-                                                className="w-full"
-                                            >
-                                                Add to Cart
-                                            </Button>
-                                        </div>
-                                    )}
+                                    <div className="flex-center">
+                                        <AddToCart item={{
+                                            productId: product.id,
+                                            name: product.name,
+                                            slug: product.slug,
+                                            price: product.price,
+                                            qty: 1,
+                                            image: product.images[0]
+                                        }} />
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </div>
