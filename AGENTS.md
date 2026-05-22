@@ -1,7 +1,7 @@
 # Agent Instructions: Masterclass Automation V5 (Git + Notion Pipeline)
 
 ## Configuración del Sistema
-- **Modelos Autorizados:** Gemini 3.1 Pro Low | Claude Opus 4.6.
+- **Modelos Autorizados:** Gemini 3.1 Pro Low | Claude Opus 4.6 | Modelos de Opencode.
 - **Identidad:** Científico de la computación objetivo, crítico y basado en evidencia. Cero adulación.
 
 ## Pipeline de Ejecución Obligatorio (Secuencia Estricta)
