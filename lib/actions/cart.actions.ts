@@ -26,8 +26,11 @@ const calcPrice = (items: CartItem[]) =>{
 export const addItemToCart = async (data: CartItem) => {
   try {
     //Check for cart cookie (SESSION CART)
-    const sessionCartId = (await cookies()).get("sessionCartId")?.value;
-    if (!sessionCartId) throw new Error("Cart session id not found");
+    let sessionCartId = (await cookies()).get("sessionCartId")?.value;
+    if (!sessionCartId) {
+      sessionCartId = crypto.randomUUID();
+      (await cookies()).set("sessionCartId", sessionCartId);
+    }
 
     //Get session and user ID (SESSION USER)
     const session = await auth();
@@ -63,8 +66,45 @@ export const addItemToCart = async (data: CartItem) => {
         success: true,
         message: `${product.name} added to cart`
       }
-    }else{
+    }
+    else{
+      // Check if item is already in cart
+      const existItem = (cart.items as CartItem[]).find((x)=>x.productId === item.productId)
 
+      if(existItem){
+        // Check stock
+        if(product.stock < existItem.qty + 1){
+          throw new Error('Not enough stock')
+        }
+
+        // Increase the quantity
+        (cart.items as CartItem[]).find((x)=>x.productId === item.productId)!.qty = existItem.qty + 1
+
+      }
+      else{
+        // If items does not exist in cart
+        // Check stock
+        if(product.stock < 1)throw new Error('Not enough stock')
+
+        // Add item to cart
+        cart.items.push(item)
+      }
+
+      // Save to the database
+      await prisma.cart.update({
+        where:{id:cart.id},
+        data:{
+          items: cart.items as Prisma.CartUpdateitemsInput[],
+          ...calcPrice(cart.items as CartItem[])
+        }
+      })
+
+      revalidatePath(`/product/${product.slug}`)
+
+      return {
+        success: true,
+        message: `${product.name} ${existItem ? 'updated in': 'added to'} cart`
+      }
     }
 
   } catch (error) {
@@ -77,7 +117,7 @@ export const addItemToCart = async (data: CartItem) => {
 export const getMyCart = async () => {
   //Check for cart cookie (SESSION CART)
   const sessionCartId = (await cookies()).get("sessionCartId")?.value;
-  if (!sessionCartId) throw new Error("Cart session id not found");
+  if (!sessionCartId) return undefined;
 
   //Get session and user ID (SESSION USER)
   const session = await auth();

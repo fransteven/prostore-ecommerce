@@ -16,7 +16,7 @@ function AddToCart({ item }: { item: CartItem }) {
             toast.error(res.message)
             return
         }
-        toast.success(`${item.name} added to cart!`, {
+        toast.success(res.message, {
             action: (
                 <Button className='bg-primary text-white cursor-pointer hover:bg-gray-800 ' onClick={() => router.push('/cart')}>
                     Go to Cart
