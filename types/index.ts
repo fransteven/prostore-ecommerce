@@ -9,4 +9,4 @@ export type Product = z.infer<typeof insertProductSchema> & {
 
 export type Cart = z.infer<typeof insertCartSchema>
 export type CartItem = z.infer<typeof cartItemSchema>
-export type ShippingAddressSchema = z.infer<typeof shippingAddressSchema>
+export type ShippingAddressType = z.infer<typeof shippingAddressSchema>
