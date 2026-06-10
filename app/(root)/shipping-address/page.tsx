@@ -11,15 +11,16 @@ export const metadata: Metadata = {
 };
 
 async function ShippingAddressPage() {
-    const cart = await getMyCart()
+  const [cart, session] = await Promise.all([
+    getMyCart(),
+    auth()
+  ])
 
     if(!cart || cart.items.length === 0) redirect('/cart')
 
-    const session = await auth()
-
     const userId = session?.user?.id
 
-    if(!userId) throw new Error('No user ID')
+    if(!userId) redirect(`/sign-in?callbackUrl=/shipping-address`)
 
     const user = await getUserById(userId)
 
