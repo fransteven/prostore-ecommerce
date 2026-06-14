@@ -5,18 +5,15 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { compareSync } from "bcrypt-ts-edge";
 import type { NextAuthConfig } from "next-auth";
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { authConfig } from "./auth.config";
 
 
 export const config = {
-    pages:{
-        signIn: '/sign-in',
-        error: '/sign-in'
-    },
+    ...authConfig,
     session:{
         strategy: 'jwt',
 
-        maxAge: 30 * 24 * 60 * 60 * 1000
+        maxAge: 30 * 24 * 60 * 60
     },
     adapter: PrismaAdapter(prisma),
     providers:[CredentialsProvider({
@@ -47,6 +44,7 @@ export const config = {
         }
     })],
     callbacks:{
+        ...authConfig.callbacks,
         async session({session,user, trigger, token}: any){
             //Set the user ID from the token
             session.user.id = token.sub
@@ -101,28 +99,6 @@ export const config = {
             }
             return token
         },
-        async authorized({request,auth}){
-            // Check for session cart cookie
-            if(!request.cookies.get('sessionCartId')){
-                const sessionCartId = crypto.randomUUID()
-
-                // Clone the request headers
-                const newRequestHeaders = new Headers(request.headers)
-
-                const response = NextResponse.next({
-                    request: {
-                        headers: newRequestHeaders
-                    }
-                })
-                // Set newly generated sessionCartId in the response cookies
-                response.cookies.set('sessionCartId',sessionCartId)
-
-                return response
-            }
-            else {
-                return true
-            }
-        }
     }
 } satisfies NextAuthConfig
 
