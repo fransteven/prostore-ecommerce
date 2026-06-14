@@ -53,8 +53,6 @@ export const config = {
             session.user.role = token.role
             session.user.name = token.name
 
-            console.log(token)
-
             //If there is an update, set the username
             if(trigger === 'update'){
                 session.user.name = user.name
@@ -64,6 +62,7 @@ export const config = {
         async jwt({ token, user, trigger, session } : any){
             //Asign user fields to token
             if(user){
+                token.id = user.id
                 token.role = user.role
 
                 // If user has no name then use the email
@@ -75,6 +74,29 @@ export const config = {
                         where: {id: user.id},
                         data: {name: token.name}
                     })
+                }
+                if(trigger === 'signIn' || trigger === 'signUp'){
+                    const cookiesObject = await cookies()
+                    const sessionCartId = cookiesObject.get('sessionCartId')?.value
+
+                    if(sessionCartId){
+                        const sessionCart = await prisma.cart.findFirst({
+                            where: {sessionCartId}
+                        })
+                        if (sessionCart){
+                            // Delete current user cart
+                            await prisma.cart.deleteMany({
+                                where: {userId:user.id}
+                            })
+
+                            // Assign new Cart
+                            await prisma.cart.update({
+                                where: {id: sessionCart.id},
+                                data: {userId:user.id}
+                            })
+
+                        }
+                    }
                 }
             }
             return token
