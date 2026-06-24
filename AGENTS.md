@@ -40,3 +40,114 @@ El contenido dentro de Notion debe estructurarse obligatoriamente así:
         - **R2 (Expansión):** T + 10 días.
         - **R3 (Maestría):** T + 30 días.
     * Insertar tabla: `[Fecha] - Objetivo: [Recuperar conceptos / Aplicar a nuevos módulos / Optimización]`
+
+---
+
+# Codebase Reference (ProStore)
+
+> Auto-generated from `/init` analysis. The Masterclass Automation pipeline rules above take precedence over anything here.
+
+## Commands
+
+```bash
+npm run dev                    # Start dev server (localhost:3000)
+npm run build                  # Production build
+npm run start                  # Start production server
+npm run lint                   # Run ESLint
+npx prisma migrate dev         # Run DB migrations
+npx prisma studio              # Open Prisma DB GUI
+npx tsx db/seed.ts             # Seed database with sample data
+# Note: `postinstall` automatically runs `prisma generate`
+```
+
+## Stack
+
+| Layer | Tech |
+|-------|------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| UI | React 19, Tailwind v4, shadcn/ui (New York) |
+| ORM | Prisma 7 + Neon serverless Postgres |
+| Auth | NextAuth v5 beta + `@auth/prisma-adapter` |
+| Validation | Zod v4 |
+| Forms | react-hook-form + `@hookform/resolvers` |
+| Notifications | sonner (`Toaster`) |
+| Theme | next-themes (class-based dark mode) |
+
+## Route Structure
+
+```
+app/
+  layout.tsx                     # ThemeProvider + Toaster
+  (auth)/
+    layout.tsx
+    sign-in/page.tsx             # + credentials-signin-form.tsx
+    sign-up/page.tsx             # + sign-up-form.tsx
+  (root)/
+    layout.tsx                   # Header + Footer
+    page.tsx                     # Home — calls getProducts()
+    cart/page.tsx                # + cart-table.tsx
+    shipping-address/page.tsx    # + shipping-address-form.tsx
+    payment-method/page.tsx      # + payment-method-form.tsx
+    product/[slug]/page.tsx      # Product detail (dynamic)
+  api/auth/[...nextauth]/route.ts  # NextAuth handlers
+```
+
+## Key Architecture Patterns
+
+- **Server Actions** in `lib/actions/` (always `"use server"`). No API routes except NextAuth.
+  - `user.actions.ts` — `signInWithCredentials`, `signOutUser`, `signUpUser`, `getUserById`, `updateUserAddress`, `updateUserPaymentMethod`
+  - `cart.actions.ts` — `addItemToCart`, `getMyCart`, `removeItemFromCart` (session-cart-cookie, recalculates all prices)
+  - `product.actions.ts` — `getProducts`, `getProductBySlug`
+- **Prisma singleton** at `db/prisma.ts` — Neon serverless adapter, `$extends` converts `Decimal` `price`/`rating` to strings for JSON serialization; global HMR cache. Client generates to `lib/generated/prisma`.
+- **Data serialization**: pass all Prisma results through `convertToPlainObject()` (`lib/utils.ts`) before RSC→Client.
+- **Validation** (`lib/validators.ts`): `insertProductSchema`, `signInFormSchema`, `signUpFormSchema` (confirmPassword refine), `cartItemSchema`, `insertCartSchema`, `shippingAddressSchema` (optional lat/lng), `paymentMethodSchema`. Shared `currency` refinement enforces 2-decimal precision.
+- **Constants** (`lib/constants/index.ts`): `PAYMENT_METHODS`, `DEFAULT_PAYMENT_METHOD`, default form values (`shippingAddressDefaultValues`, etc.), env-overridable app config.
+- **Forms**: react-hook-form + Zod resolvers; server actions use `(prevState, formData)` signature (useActionState pattern).
+
+## Auth
+
+| File | Role |
+|------|------|
+| `auth.ts` | Full config: JWT strategy (30-day sessions), PrismaAdapter, CredentialsProvider (`bcrypt-ts-edge`). Callbacks inject `id`/`role`/`name` into JWT/session; on sign-in merges guest `sessionCartId` cart into user. Exports `handlers, signIn, signOut, auth`. |
+| `auth.config.ts` | Edge-safe config. `authorized` callback: protects `/shipping-address`, `/payment-method`, `/place-order`, `/profile`, `/user/*`, `/order/*`, `/admin`; sets `sessionCartId` cookie for guests. |
+| `middleware.ts` | `export default NextAuth(authConfig).auth` — matcher excludes `api`, `_next/static`, `_next/image`, `favicon.ico`. |
+
+## Prisma Models (`prisma/schema.prisma`)
+
+All PKs are UUIDs via `gen_random_uuid()`.
+
+| Model | Notable fields |
+|-------|----------------|
+| **Product** | `slug` (unique), `images String[]`, `price/rating Decimal`, `isFeatured`, `banner?` |
+| **User** | `email` (unique), `role` (default `"user"`), `address Json?`, `paymentMethod?`, `password?` |
+| **Account** | NextAuth OAuth: `provider`+`providerAccountId` composite PK, token fields |
+| **Session** | `sessionToken` PK, `userId`, `expiresAt` |
+| **VerificationToken** | `identifier`+`token` composite PK |
+| **Cart** | `userId?` (optional), `sessionCartId`, `items Json[]`, `itemsPrice/shippingPrice/taxPrice/totalPrice Decimal(12,2)` |
+
+## Components
+
+```
+components/
+  ui/           # shadcn primitives (button, card, form, input, table, sheet, …)
+  product/      # add-to-cart, product-card, product-images, product-list, product-price
+  shared/       # header/ (index, menu, mode-toggle, user-button), checkout-steps
+  footer.tsx
+```
+
+## DB Tooling (`db/`)
+
+- `prisma.ts` — Neon serverless singleton (see above)
+- `seed.ts` — uses `PrismaPg` (direct connection, not Neon adapter) for seeding
+- `sample-data.ts` — sample products
+
+## Environment Variables
+
+```
+NEXT_PUBLIC_APP_NAME=Prostore
+NEXT_PUBLIC_APP_DESCRIPTION=...
+NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+DATABASE_URL=postgresql://...   # Neon serverless connection string
+AUTH_SECRET=...                 # NextAuth secret
+```
