@@ -14,7 +14,7 @@ async function generateAccessToken() {
     body: "grant_type=client_credentials",
     headers: {
       Authorization: `Basic ${auth}`,
-      "Content-Type": "application/x-www-form-url-encoded",
+      "Content-Type": "application/x-www-form-urlencoded",
     },
   });
 
@@ -26,3 +26,5 @@ async function generateAccessToken() {
     throw new Error(errorMessage)
   }
 }
+
+export {generateAccessToken}
