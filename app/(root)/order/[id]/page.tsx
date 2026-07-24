@@ -22,7 +22,9 @@ async function OrderDetailsPage(props: {
     <OrderDetailsTable order={{
         ...order,
         shippingAddress: order.shippingAddress as ShippingAddressType
-    }}/>
+    }}
+        paypalClientId={process.env.PAYPAL_CLIENT_ID || 'sb'}
+    />
   )
 }
 

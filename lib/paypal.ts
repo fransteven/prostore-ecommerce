@@ -16,7 +16,7 @@ export const paypal = {
           {
             amount: {
               currency_code: "USD",
-              value: price,
+              value: price.toFixed(2),
             },
           },
         ],
@@ -26,14 +26,15 @@ export const paypal = {
   },
   capturePayment: async function capturePayment(orderId:string) {
     const accessToken = await generateAccessToken()
-    const url = `${base}/v2/orders/${orderId}/capture`
+    const url = `${base}/v2/checkout/orders/${orderId}/capture`
 
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        "Content-Type":"application/json",
+        "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`
-      }
+      },
+      body: JSON.stringify({}),
     })
     return handleResponse(response)
   }
@@ -62,10 +63,15 @@ async function generateAccessToken() {
 async function handleResponse(response:Response) {
   if (response.ok) {
     return response.json();
-  } else {
-    const errorMessage = await response.text();
-    throw new Error(errorMessage);
   }
+
+  const errorMessage = await response.text();
+  const debugId = response.headers.get("paypal-debug-id");
+
+  throw new Error(
+    errorMessage ||
+      `PayPal ${response.status} ${response.statusText} (${response.url})${debugId ? ` debug-id: ${debugId}` : ""}`,
+  );
 }
 
 export { generateAccessToken };
