@@ -274,9 +274,14 @@ type SalesDataType={
 // Get sales data and order summary
 export async function getOrderSummary(){
   // Get counts for each resource
-  const ordersCount = await prisma.order.count()
-  const productsCount = await prisma.product.count()
-  const usersCount = await prisma.user.count()
+  const [ordersCount, productsCount, usersCount, totalSalesAggregate] = await Promise.all([
+    prisma.order.count(),
+    prisma.product.count(),
+    prisma.user.count(),
+    prisma.order.aggregate({
+      _sum: { totalPrice: true }
+    })
+  ]);
 
   // Calculate the total sales
   const totalSales = await prisma.order.aggregate({
@@ -284,7 +289,7 @@ export async function getOrderSummary(){
   })
 
   // Get monthly sales
-  const salesDataRaw = await prisma.$queryRaw<Array<{month:string, totalSales:Prisma.Decimal}>>`SELECT to_char("createdAt","MM/YY") as "month", sum("totalPrice") as "totalSales" FROM "Order" GROUP BY to_char("createdAt", "MM/YY")`
+  const salesDataRaw = await prisma.$queryRaw<Array<{month:string, totalSales:Prisma.Decimal}>>`SELECT to_char("createdAt",'MM/YY') as "month", sum("totalPrice") as "totalSales" FROM "Order" GROUP BY to_char("createdAt", 'MM/YY') ORDER BY min("createdAt") ASC`
 
   const salesData:SalesDataType = salesDataRaw.map((entry)=>({
     month:entry.month,
