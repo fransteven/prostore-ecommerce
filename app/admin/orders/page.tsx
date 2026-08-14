@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import DeleteDialog from "@/components/shared/delete-dialog";
 import Pagination from "@/components/shared/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getAllOrders } from "@/lib/actions/order.actions";
+import { deleteOrder, getAllOrders } from "@/lib/actions/order.actions";
 import { formatCurrency, formatDateTime, formatId } from "@/lib/utils";
 import {
   CheckCircle2,
@@ -170,6 +171,7 @@ async function AdminOrdersPage(props: {
                               <span>Details</span>
                             </Link>
                           </Button>
+                          <DeleteDialog id={order.id} action={deleteOrder}/>
                         </TableCell>
                       </TableRow>
                     );
