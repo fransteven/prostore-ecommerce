@@ -2,28 +2,43 @@
 
 import { Button } from "@/components/ui/button";
 import { createOrder } from "@/lib/actions/order.actions";
-import { Check, Loader } from "lucide-react";
+import { Loader2, ShoppingBag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { useFormStatus } from "react-dom";
+import { toast } from "sonner";
 
 export default function PlaceOrderForm() {
   const router = useRouter();
-  const handleSubmit = async ()=>{
-    const res = await createOrder()
-    if(res.redirectTo){
-        router.push(res.redirectTo)
+
+  const handleSubmit = async () => {
+    const res = await createOrder();
+    if (!res.success) {
+      toast.error(res.message);
     }
-  }
+    if (res.redirectTo) {
+      router.push(res.redirectTo);
+    }
+  };
+
   const PlaceOrderButton = () => {
     const { pending } = useFormStatus();
     return (
-      <Button disabled={pending} className="w-full">
+      <Button
+        disabled={pending}
+        className="w-full gap-2 shadow-xs py-5 text-sm sm:text-base font-semibold cursor-pointer"
+      >
         {pending ? (
-          <Loader className="w-4 h-4 animate-spin" />
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            <span>Placing Order...</span>
+          </>
         ) : (
-          <Check className="w-4 h-4" />
-        )} {' '} Place Order
+          <>
+            <ShoppingBag className="size-4" />
+            <span>Place Order Now</span>
+          </>
+        )}
       </Button>
     );
   };
