@@ -1,7 +1,8 @@
+import DeleteDialog from "@/components/shared/delete-dialog";
 import Pagination from "@/components/shared/pagination";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getAllProducts } from "@/lib/actions/product.actions";
+import { deleteProduct, getAllProducts } from "@/lib/actions/product.actions";
 import { formatCurrency, formatId } from "@/lib/utils";
 import { SearchParamsContext } from "next/dist/shared/lib/hooks-client-context.shared-runtime";
 import Link from "next/link";
@@ -66,7 +67,7 @@ async function AdminProductsPage(
                                 <Button asChild variant='outline' size='sm'>
                                     <Link href={`/admin/products/${product.id}`}>Edit</Link>
                                 </Button>
-                                {/* DELETE */}
+                                <DeleteDialog id={product.id} action={deleteProduct} />
                             </TableCell>
                         </TableRow>
                     ))}
